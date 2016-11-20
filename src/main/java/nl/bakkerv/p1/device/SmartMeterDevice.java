@@ -15,21 +15,25 @@ import java.util.TooManyListenersException;
 public class SmartMeterDevice implements SerialPortEventListener {
 
 	public enum ReaderState {
-		WAITING_FOR_START,
-		READING_DATAGRAM,
-		WAITING_CHECKSUM
+		Disabled,
+		Waiting,
+		Reading,
+		Checksum
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(SmartMeterDevice.class);
 
 	private SerialPort serialPort;
-	private ByteBuffer readByteBuffer;
-	private final int START_CHARACTER = '/';
-	private final int FINISH_CHARACTER = '!';
+	private int crc;
+	protected ByteBuffer buffer = ByteBuffer.allocate(this.maxBufferSize);
+	protected ByteBuffer checksum = ByteBuffer.allocate(10);
+	protected ReaderState readerState = ReaderState.Disabled;
+	private static final int START_CHARACTER = '/';
+	private static final int FINISH_CHARACTER = '!';
 
-	private SmartMeterListener smartMeterListener;
+	private P1DatagramListener smartMeterListener;
 
-	protected int maxBufferSize = 1024;
+	protected int maxBufferSize = 4096;
 
 	@Inject
 	SmartMeterDeviceConfiguration smartMeterConfig;
@@ -37,6 +41,8 @@ public class SmartMeterDevice implements SerialPortEventListener {
 	public void init() {
 		logger.info("Initializing SmartMeterDevice at {}", this.smartMeterConfig.getPortName());
 		logger.debug("Port settings: {}", this.smartMeterConfig);
+		this.readerState = ReaderState.Disabled;
+		this.buffer = ByteBuffer.allocate(this.maxBufferSize);
 		try {
 			CommPortIdentifier commPortIdentifier = CommPortIdentifier.getPortIdentifier(this.smartMeterConfig.getPortName());
 			this.serialPort = (SerialPort) commPortIdentifier.open("p1meter", this.smartMeterConfig.getPortTimeOut());
@@ -46,9 +52,9 @@ public class SmartMeterDevice implements SerialPortEventListener {
 					this.smartMeterConfig.getSmartMeterPortSettings().getDataBits().getBits(),
 					this.smartMeterConfig.getSmartMeterPortSettings().getStopBits().getStopBits(),
 					this.smartMeterConfig.getSmartMeterPortSettings().getParity().getParity());
-			this.readByteBuffer = ByteBuffer.allocate(this.maxBufferSize);
 
 			logger.info("Finished initializing SmartMeterDevice.");
+			this.readerState = ReaderState.Waiting;
 
 		} catch (TooManyListenersException | PortInUseException | UnsupportedCommOperationException | NoSuchPortException e) {
 			logger.error(e.toString(), e);
@@ -61,23 +67,87 @@ public class SmartMeterDevice implements SerialPortEventListener {
 		if (serialPortEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
 
 			try {
-				int nextByte;
-
-				while ((nextByte = this.serialPort.getInputStream().read()) != -1) {
-					this.readByteBuffer.put((byte) nextByte);
-
-					if (nextByte == this.FINISH_CHARACTER) {
-						this.smartMeterListener.put(new String(this.readByteBuffer.array()));
-						this.readByteBuffer.clear();
+				for (int i = 0; i < this.serialPort.getInputStream().available(); i++) {
+					int read = this.serialPort.getInputStream().read();
+					if (read == -1) {
+						logger.debug("No bytes available");
+						continue;
 					}
+					byte c = (byte) read;
+					handleCharacter(c);
 				}
-			} catch (IOException e) {
+			}
+
+			catch (IOException e) {
 				logger.error(e.toString(), e);
 			}
 		}
 	}
 
-	public void setSmartMeterListener(final SmartMeterListener smartMeterListener) {
+	protected void handleCharacter(final byte c) {
+		switch (this.readerState) {
+		case Disabled:
+			break;
+		case Reading:
+			this.crc = crc16_update(this.crc, c);
+			if (c == FINISH_CHARACTER) {
+				this.readerState = ReaderState.Checksum;
+				this.checksum.clear();
+				logger.debug("Saw ! -> Checksum");
+			}
+			this.buffer.put(c);
+			break;
+		case Waiting:
+			if (c == START_CHARACTER) {
+				logger.debug("Saw /, go to Reading");
+				this.readerState = ReaderState.Reading;
+				this.buffer.clear();
+				this.buffer.put(c);
+				this.crc = crc16_update(0, c);
+			}
+			break;
+		case Checksum:
+			// we are reading the checksum (optionally, not present in V3)
+			this.checksum.put(c);
+			if (this.checksum.position() == 4 || c == '\r' || c == '\n') {
+				logger.debug("Read {} chars, verify checksum", this.checksum.position());
+				boolean checksumCorrect = false;
+				if (this.checksum.position() == 4) {
+					// done reading checksum
+					int receivedCrc16 = Integer.parseInt(new String(this.checksum.array()), 16);
+					if (this.crc == receivedCrc16) {
+						logger.debug("Checkum is correct");
+						checksumCorrect = true;
+					}
+				}
+				if (checksumCorrect || this.checksum.position() < 4 && (c == '\r' || c == '\n')) {
+					String datagram = new String(this.buffer.array());
+					logger.debug("read datagram: {}", datagram);
+					this.smartMeterListener.put(datagram);
+				}
+
+				this.buffer.clear();
+				this.checksum.clear();
+				this.readerState = ReaderState.Waiting;
+				break;
+			}
+		}
+	}
+
+	public void setSmartMeterListener(final P1DatagramListener smartMeterListener) {
 		this.smartMeterListener = smartMeterListener;
+	}
+
+	int crc16_update(int crc, final byte a) {
+		int i;
+		crc ^= a;
+		for (i = 0; i < 8; ++i) {
+			if ((crc & 1) != 0) {
+				crc = crc >> 1 ^ 0xA001;
+			} else {
+				crc = crc >> 1;
+			}
+		}
+		return crc;
 	}
 }

@@ -1,13 +1,16 @@
 package nl.bakkerv.p1.device;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nl.bakkerv.p1.domain.SmartMeterMeasurement;
 import nl.bakkerv.p1.parser.DatagramParser;
 
-public class SmartMeterListenerImpl implements SmartMeterListener {
+public class P1DatagramListenerImpl implements P1DatagramListener {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -15,8 +18,14 @@ public class SmartMeterListenerImpl implements SmartMeterListener {
 
 	private DatagramParser datagramParser;
 
-	public SmartMeterListenerImpl() {
+	private Set<SmartMeterMeasurementListener> listeners = new HashSet<>();
+
+	public P1DatagramListenerImpl() {
 		this.datagramParser = new DatagramParser();
+	}
+
+	public void addListener(final SmartMeterMeasurementListener listener) {
+		this.listeners.add(listener);
 	}
 
 	@Override
@@ -27,12 +36,14 @@ public class SmartMeterListenerImpl implements SmartMeterListener {
 		}
 
 		SmartMeterMeasurement measurement = this.datagramParser.parse(datagram);
-		measurement.setTimestamp(Instant.now());
+		if (measurement.getTimestamp() == null) {
+			measurement.setTimestamp(Instant.now());
+		}
 
 		this.currentMeasurement = measurement;
+		this.listeners.forEach(l -> l.smartMeterMeasurementRead(measurement));
 	}
 
-	@Override
 	public SmartMeterMeasurement getCurrentMeasurement() {
 		return this.currentMeasurement;
 	}
