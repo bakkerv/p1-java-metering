@@ -8,14 +8,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 public class DatagramParserTest {
 
 	private DatagramParser parser;
 
-	@BeforeClass
+	@Before
 	public void init() {
 		this.parser = new DatagramParser();
 	}

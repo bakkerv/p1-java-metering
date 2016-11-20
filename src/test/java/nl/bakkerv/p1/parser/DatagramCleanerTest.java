@@ -14,7 +14,7 @@ public class DatagramCleanerTest {
 
 	@Test
 	public void testAsArray() throws Exception {
-		assertThat(19).isEqualTo(DatagramCleaner.asArray(getTestDatagram()).length);
+		assertThat(DatagramCleaner.asArray(getTestDatagram())).hasSize(19);
 	}
 
 	private String getTestDatagram() {
@@ -22,7 +22,7 @@ public class DatagramCleanerTest {
 		String result = null;
 
 		try {
-			IOUtils.copy(getClass().getResourceAsStream("/test-data.txt"), stringWriter);
+			IOUtils.copy(getClass().getResourceAsStream("/test-data-v3.txt"), stringWriter);
 			result = stringWriter.toString();
 		} catch (IOException e) {
 			e.printStackTrace();
