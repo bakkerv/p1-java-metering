@@ -1,20 +1,32 @@
 package nl.bakkerv.p1.parser;
 
-import org.apache.commons.io.IOUtils;
-import org.junit.Test;
-
-import nl.bakkerv.p1.parser.DatagramCleaner;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
 
+import org.apache.commons.io.IOUtils;
+import org.junit.Before;
+import org.junit.Test;
+
 public class DatagramCleanerTest {
 
+	private DatagramCleaner cleanerUnderTest;
+
+	@Before
+	public void setUp() {
+		this.cleanerUnderTest = new DatagramCleaner();
+	}
+
 	@Test
-	public void testAsArray() throws Exception {
-		assertThat(DatagramCleaner.asArray(getTestDatagram())).hasSize(19);
+	public void asArray() throws Exception {
+		assertThat(this.cleanerUnderTest.asArray(getTestDatagram())).hasSize(19);
+	}
+
+	@Test
+	public void splitDiagram() {
+		fail("TODO");
 	}
 
 	private String getTestDatagram() {
@@ -30,4 +42,5 @@ public class DatagramCleanerTest {
 
 		return result;
 	}
+
 }
