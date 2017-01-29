@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 
 import org.junit.Test;
 
+import nl.bakkerv.p1.parser.text.CubicMetreValueParser;
+import nl.bakkerv.p1.parser.text.ValueParser;
+
 public class CubicMetreValueParserTest {
 	@Test
 	public void testParse() throws Exception {

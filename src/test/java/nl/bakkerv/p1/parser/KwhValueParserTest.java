@@ -1,12 +1,12 @@
 package nl.bakkerv.p1.parser;
 
-import nl.bakkerv.p1.parser.KwhValueParser;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 
 import org.junit.Test;
+
+import nl.bakkerv.p1.parser.text.KwhValueParser;
 
 public class KwhValueParserTest {
 	@Test

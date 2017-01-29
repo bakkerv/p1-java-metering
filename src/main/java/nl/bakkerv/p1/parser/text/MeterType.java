@@ -1,12 +1,12 @@
-package nl.bakkerv.p1.parser;
+package nl.bakkerv.p1.parser.text;
 
 import java.util.EnumSet;
 
 enum MeterType {
 	INVALID(-1),
-	GAS(3),
-	HEAT(5),
-	COOLING(6);
+	GAS(3);
+	// HEAT(5),
+	// COOLING(6);
 
 	private int id;
 

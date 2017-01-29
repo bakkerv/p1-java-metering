@@ -1,9 +1,11 @@
 package nl.bakkerv.p1.device;
 
-import nl.bakkerv.p1.domain.SmartMeterMeasurement;
+import java.util.Set;
+
+import nl.bakkerv.p1.domain.measurement.Measurement;
 
 public interface SmartMeterMeasurementListener {
 
-	public void smartMeterMeasurementRead(SmartMeterMeasurement smm);
+	public void smartMeterMeasurementRead(Set<Measurement<?>> smm);
 
 }

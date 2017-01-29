@@ -1,76 +1,51 @@
 package nl.bakkerv.p1.parser;
 
-import org.apache.commons.beanutils.PropertyUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import nl.bakkerv.p1.domain.SmartMeterMeasurement;
-
-import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
+import com.google.common.collect.Sets;
+
+import nl.bakkerv.p1.domain.measurement.Measurement;
+import nl.bakkerv.p1.domain.meter.Meter;
 
 public class DatagramParser {
 
-	private Logger logger = LoggerFactory.getLogger(getClass());
+	private Map<String, Meter<?>> mapping;
 
-	private Map<String, PropertyAndPattern<?>> mapping;
+	@Inject
+	DatagramCleaner datagramCleaner;
 
 	public DatagramParser() {
 		this.mapping = new HashMap<>();
-		this.mapping.put("1.8.1", new PropertyAndPattern<>(new KwhValueParser(), "electricityConsumptionLowRateKwh"));
-		this.mapping.put("1.8.2", new PropertyAndPattern<>(new KwhValueParser(), "electricityConsumptionNormalRateKwh"));
-		this.mapping.put("2.8.1", new PropertyAndPattern<>(new KwhValueParser(), "electricityProductionLowRateKwh"));
-		this.mapping.put("2.8.2", new PropertyAndPattern<>(new KwhValueParser(), "electricityProductionNormalRateKwh"));
-		this.mapping.put("1.7.0", new PropertyAndPattern<>(new WattValueParser(), "currentPowerConsumptionW"));
-		this.mapping.put("2.7.0", new PropertyAndPattern<>(new WattValueParser(), "currentPowerProductionW"));
-		this.mapping.put("24.3.0", new PropertyAndPattern<>(new CubicMetreValueParser(), "gasConsumptionM3"));
-		this.mapping.put("24.1.0", new PropertyAndPattern<>(new MeterTypeParser(), "meterType"));
 	}
 
-	public SmartMeterMeasurement parse(final String datagram) {
-
-		SmartMeterMeasurement result = new SmartMeterMeasurement();
-
-		String[] datagramLines = DatagramCleaner.asArray(datagram);
-
-		for (String line : datagramLines) {
-
-			for (Map.Entry<String, PropertyAndPattern<?>> entry : this.mapping.entrySet()) {
-				if (line.startsWith(entry.getKey())) {
-					entry.getValue().extract(line, result);
-					break;
-				}
-			}
-		}
-
-		return result;
+	public <T> void addPropertyParser(final String id, final Meter<?> meter) {
+		this.mapping.put(id, meter);
 	}
 
-	private class PropertyAndPattern<T> {
-
-		private ValueParser<T> valueParser;
-		private String fieldName;
-
-		public PropertyAndPattern(final ValueParser<T> valueParser, final String fieldName) {
-			this.valueParser = valueParser;
-			this.fieldName = fieldName;
-		}
-
-		public void extract(final String line, final SmartMeterMeasurement measurement) {
-			String[] split = line.split(":", 2);
-			String busID = split[0];
-			// FIXME VB: look ad busID before parsing to support generic external meters
-			T value = this.valueParser.parse(split[1]);
-			try {
-				PropertyUtils.setProperty(measurement, this.fieldName, value);
-			} catch (IllegalAccessException e) {
-				DatagramParser.this.logger.error(e.toString(), e);
-			} catch (InvocationTargetException e) {
-				DatagramParser.this.logger.error(e.toString(), e);
-			} catch (NoSuchMethodException e) {
-				DatagramParser.this.logger.error(e.toString(), e);
+	public Set<Measurement<?>> parse(final String datagram) {
+		Set<Measurement<?>> returnValue = Sets.newHashSet();
+		Map<String, String> datagramLines = cleanupAndSplitDatagram(datagram);
+		Instant timestamp = datagramLines.containsKey(DatagramCodes.TIMESTAMP) ? Instant.now() : Instant.now(); // FIXME: extract timestamp
+		for (Map.Entry<String, String> e : datagramLines.entrySet()) {
+			Meter<?> meter = this.mapping.get(e.getKey());
+			Optional<?> extractedMeasurement = meter.extractMeasurement(timestamp, e.getValue());
+			if (extractedMeasurement.isPresent()) {
+				returnValue.add((Measurement<?>) extractedMeasurement.get());
 			}
 		}
+		return returnValue;
+	}
+
+	private Map<String, String> cleanupAndSplitDatagram(final String datagram) {
+		return this.datagramCleaner.splitDiagram(datagram).entrySet().stream()
+				.filter(s -> this.mapping.containsKey(s.getKey()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 }
