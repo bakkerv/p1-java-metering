@@ -10,19 +10,21 @@ import nl.bakkerv.p1.parser.text.ValueParser;
 
 public class Meter<T> {
 
-	private String identifier;
-	private String version;
 	private String channel;
 	private ValueParser<T> parser;
 	private Direction direction;
 	private Unit unit;
+	private Kind kind;
+	private MeterType meterType;
+	public int tariff;
+	public String identifier;
 
 	private Meter() {
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.identifier, this.version, this.channel, this.direction, this.unit);
+		return Objects.hash(this.channel, this.direction, this.unit, this.kind, this.meterType, this.tariff, this.identifier);
 	}
 
 	@Override
@@ -37,23 +39,17 @@ public class Meter<T> {
 			return false;
 		}
 		Meter<?> other = (Meter<?>) obj;
-		return Objects.equals(this.identifier, other.identifier) &&
-				Objects.equals(this.version, other.version) &&
-				Objects.equals(this.channel, other.channel) &&
+		return Objects.equals(this.channel, other.channel) &&
 				Objects.equals(this.direction, other.direction) &&
-				Objects.equals(this.unit, other.unit);
+				Objects.equals(this.unit, other.unit) &&
+				Objects.equals(this.kind, other.kind) &&
+				Objects.equals(this.tariff, other.tariff) &&
+				Objects.equals(this.identifier, other.identifier) &&
+				Objects.equals(this.meterType, other.meterType);
 	}
 
 	public static <T> Builder<T> builder() {
 		return new Builder<>();
-	}
-
-	public String getIdentifier() {
-		return this.identifier;
-	}
-
-	public String getVersion() {
-		return this.version;
 	}
 
 	public String getChannel() {
@@ -72,6 +68,22 @@ public class Meter<T> {
 		return this.direction;
 	}
 
+	public Kind getEnergy() {
+		return this.kind;
+	}
+
+	public MeterType getMeterType() {
+		return this.meterType;
+	}
+
+	public int getTariff() {
+		return this.tariff;
+	}
+
+	public String getIdentifier() {
+		return this.identifier;
+	}
+
 	public Optional<Measurement<T>> extractMeasurement(final Instant timestampDatagram, final String value) {
 		Optional<TimestampedValue<T>> parsedValue = this.parser.parse(value);
 		if (!parsedValue.isPresent()) {
@@ -83,16 +95,6 @@ public class Meter<T> {
 
 	public static class Builder<T> {
 		private Meter<T> instance;
-
-		public Builder<T> withIdentifier(final String identifier) {
-			this.instance.identifier = identifier;
-			return this;
-		}
-
-		public Builder<T> withVersion(final String version) {
-			this.instance.version = version;
-			return this;
-		}
 
 		public Builder<T> withChannel(final String channel) {
 			this.instance.channel = channel;
@@ -114,10 +116,30 @@ public class Meter<T> {
 			return this;
 		}
 
+		public Builder<T> withKind(final Kind kind) {
+			this.instance.kind = kind;
+			return this;
+		}
+
+		public Builder<T> withMeterType(final MeterType mt) {
+			this.instance.meterType = mt;
+			return this;
+		}
+
 		public Meter<T> build() {
 			Meter<T> returnValue = this.instance;
 			this.instance = null;
 			return returnValue;
+		}
+
+		public Builder<T> withTariff(final int t) {
+			this.instance.tariff = t;
+			return this;
+		}
+
+		public Builder<T> withIdentifier(final String id) {
+			this.instance.identifier = id;
+			return this;
 		}
 
 	}

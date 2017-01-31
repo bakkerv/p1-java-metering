@@ -1,9 +1,10 @@
 package nl.bakkerv.p1.domain.meter;
 
-public enum Energy {
+public enum Kind {
 	ELECTRICITY,
 	GAS,
 	HEAT,
-	COLD
+	COLD,
+	CURRENT
 
 }

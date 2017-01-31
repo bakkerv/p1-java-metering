@@ -18,15 +18,16 @@ public class DatagramParser {
 
 	private Map<String, Meter<?>> mapping;
 
+	private String vendorInformation;
+	private String version;
+
 	@Inject
 	DatagramCleaner datagramCleaner;
 
+	private String meterIdentifier;
+
 	public DatagramParser() {
 		this.mapping = new HashMap<>();
-	}
-
-	public <T> void addPropertyParser(final String id, final Meter<?> meter) {
-		this.mapping.put(id, meter);
 	}
 
 	public Set<Measurement<?>> parse(final String datagram) {
@@ -48,4 +49,52 @@ public class DatagramParser {
 				.filter(s -> this.mapping.containsKey(s.getKey()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
+
+	public String getVersion() {
+		return this.version;
+	}
+
+	public String getVendorInformation() {
+		return this.vendorInformation;
+	}
+
+	public String getMeterIdentifier() {
+		return this.meterIdentifier;
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+		DatagramParser instance = new DatagramParser();
+
+		public Builder withMeterIdentifier(final String meterID) {
+			this.instance.meterIdentifier = meterID;
+			return this;
+		}
+
+		public Builder withVendorInformation(final String vendorInfo) {
+			this.instance.vendorInformation = vendorInfo;
+			return this;
+		}
+
+		public Builder withVersion(final String version) {
+			this.instance.version = version;
+			return this;
+		}
+
+		public DatagramParser build() {
+			DatagramParser returnValue = this.instance;
+			this.instance = null;
+			return returnValue;
+		}
+
+		public Builder addPropertyParser(final String id, final Meter<?> meter) {
+			this.instance.mapping.put(id, meter);
+			return this;
+		}
+
+	}
+
 }

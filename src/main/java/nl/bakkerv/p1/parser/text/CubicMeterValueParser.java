@@ -5,11 +5,11 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CubicMetreValueParser implements ValueParser<BigDecimal> {
+public class CubicMeterValueParser implements ValueParser<BigDecimal> {
 
 	private Pattern pattern;
 
-	public CubicMetreValueParser() {
+	public CubicMeterValueParser() {
 		this.pattern = Pattern.compile("\\(([0-9]*\\.[0-9]*)\\)$");
 	}
 
