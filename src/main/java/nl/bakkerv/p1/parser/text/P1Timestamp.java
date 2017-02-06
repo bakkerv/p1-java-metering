@@ -19,7 +19,18 @@ public class P1Timestamp {
 		this.zonedDateTime = timestamp.atZone(timezone.toZoneId());
 	}
 
+	public static P1Timestamp parse(final String p1String, final TimeZone timezone) throws InvalidP1TimestampException {
+		return new P1Timestamp(p1String, timezone);
+	}
+
+	public static P1Timestamp parse(final String p1String) throws InvalidP1TimestampException {
+		return new P1Timestamp(p1String, TimeZone.getDefault());
+	}
+
 	public P1Timestamp(final String p1String, final TimeZone timezone) throws InvalidP1TimestampException {
+		if (p1String == null) {
+			throw new InvalidP1TimestampException("Value cannot be null");
+		}
 		if (p1String.length() != 13) {
 			throw new InvalidP1TimestampException(
 					"p1String length incorrect, must be in format YYMMDDhhmmssX "

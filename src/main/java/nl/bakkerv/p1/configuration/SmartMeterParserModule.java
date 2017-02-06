@@ -1,6 +1,8 @@
 package nl.bakkerv.p1.configuration;
 
 import java.io.File;
+import java.util.TimeZone;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.inject.AbstractModule;
@@ -24,8 +26,10 @@ public class SmartMeterParserModule extends AbstractModule {
 	protected void configure() {
 		ObjectMapper om = new ObjectMapper(new YAMLFactory());
 		try {
-			SmartMeterDeviceConfiguration config = om.readValue(new File(this.configFile), SmartMeterDeviceConfiguration.class);
-			bind(SmartMeterDeviceConfiguration.class).toInstance(config);
+			SmartMeterParserConfiguration config = om.readValue(new File(this.configFile), SmartMeterParserConfiguration.class);
+			bind(SmartMeterParserConfiguration.class).toInstance(config);
+			bind(SmartMeterDeviceConfiguration.class).toInstance(config.getSmartMeter());
+			bind(TimeZone.class).toInstance(config.getTimeZone());
 			bind(DatagramParserFactory.class).in(Singleton.class);
 		} catch (Exception e) {
 			throw new RuntimeException(e);

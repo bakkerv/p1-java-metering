@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
+import com.google.inject.Provider;
 
 import nl.bakkerv.p1.domain.meter.Direction;
 import nl.bakkerv.p1.domain.meter.Kind;
@@ -27,8 +28,8 @@ import nl.bakkerv.p1.parser.DatagramParser.Builder;
 import nl.bakkerv.p1.parser.text.DSMRVersionParser;
 import nl.bakkerv.p1.parser.text.KwhValueParser;
 import nl.bakkerv.p1.parser.text.MeterIdentifierParser;
-import nl.bakkerv.p1.parser.text.V4TimestampAndCubicMeterParser;
 import nl.bakkerv.p1.parser.text.TimestampedValue;
+import nl.bakkerv.p1.parser.text.V4TimestampAndCubicMeterParser;
 import nl.bakkerv.p1.parser.text.ValueParser;
 import nl.bakkerv.p1.parser.text.WattValueParser;
 
@@ -39,10 +40,13 @@ public class DatagramParserFactory {
 	@Inject
 	private DatagramCleaner datagramCleaner;
 
+	@Inject
+	private Provider<DatagramParser.Builder> dgBuilderProvider;
+
 	private static final Logger logger = LoggerFactory.getLogger(DatagramParserFactory.class);
 
 	public Optional<DatagramParser> create(final String dataGram) {
-		Builder newParser = DatagramParser.builder();
+		Builder newParser = this.dgBuilderProvider.get();
 		Map<String, String> cleanedUp = this.datagramCleaner.splitDiagram(dataGram);
 		Optional<String> dsmrVersion = extractField(cleanedUp, DatagramCodes.DSMR_VERSION, DSMRVersionParser::new);
 		Optional<String> meterID = extractField(cleanedUp, DatagramCodes.SMART_METER_ID, MeterIdentifierParser::new);
@@ -80,7 +84,7 @@ public class DatagramParserFactory {
 		return Optional.of(newParser.build());
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes", "unused" })
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void extractMeter(final Builder newParser, final Collection<Entry<String, String>> values) {
 		Kind kind = null;
 		String identifier = null;

@@ -5,24 +5,34 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Sets;
+import com.google.inject.Provider;
 
 import nl.bakkerv.p1.domain.measurement.Measurement;
 import nl.bakkerv.p1.domain.meter.Meter;
+import nl.bakkerv.p1.parser.text.InvalidP1TimestampException;
+import nl.bakkerv.p1.parser.text.P1Timestamp;
 
 public class DatagramParser {
 
 	private Map<String, Meter<?>> mapping;
+	private static final Logger logger = LoggerFactory.getLogger(DatagramParser.class);
 
 	private String vendorInformation;
 	private String version;
 
 	@Inject
 	DatagramCleaner datagramCleaner;
+	@Inject
+	private TimeZone timeZone;
 
 	private String meterIdentifier;
 
@@ -32,10 +42,26 @@ public class DatagramParser {
 
 	public Set<Measurement<?>> parse(final String datagram) {
 		Set<Measurement<?>> returnValue = Sets.newHashSet();
+		if (datagram == null) {
+			return returnValue;
+		}
 		Map<String, String> datagramLines = cleanupAndSplitDatagram(datagram);
-		Instant timestamp = datagramLines.containsKey(DatagramCodes.TIMESTAMP) ? Instant.now() : Instant.now(); // FIXME: extract timestamp
+		// Instant timestamp = datagramLines.containsKey(DatagramCodes.TIMESTAMP) ? this.extract : Instant.now(); // FIXME: extract timestamp
+		Instant timestamp = Instant.now();
+		if (datagramLines.containsKey(DatagramCodes.TIMESTAMP)) {
+			String p1Value = datagramLines.get(DatagramCodes.TIMESTAMP);
+			String p1String = p1Value.substring(1, p1Value.length() - 1);
+			try {
+				timestamp = P1Timestamp.parse(p1String, this.timeZone).getZonedDateTime().toInstant();
+			} catch (InvalidP1TimestampException e) {
+				logger.debug("Could not parse {} as P1 timestamp {}", p1String, e.getMessage());
+			}
+		}
 		for (Map.Entry<String, String> e : datagramLines.entrySet()) {
 			Meter<?> meter = this.mapping.get(e.getKey());
+			if (meter == null) {
+				continue;
+			}
 			Optional<?> extractedMeasurement = meter.extractMeasurement(timestamp, e.getValue());
 			if (extractedMeasurement.isPresent()) {
 				returnValue.add((Measurement<?>) extractedMeasurement.get());
@@ -46,7 +72,7 @@ public class DatagramParser {
 
 	private Map<String, String> cleanupAndSplitDatagram(final String datagram) {
 		return this.datagramCleaner.splitDiagram(datagram).entrySet().stream()
-				.filter(s -> this.mapping.containsKey(s.getKey()))
+				.filter(s -> this.mapping.containsKey(s.getKey()) || DatagramCodes.TIMESTAMP.equals(s.getKey()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 
@@ -66,12 +92,13 @@ public class DatagramParser {
 		return this.mapping;
 	}
 
-	public static Builder builder() {
-		return new Builder();
-	}
-
 	public static class Builder {
-		DatagramParser instance = new DatagramParser();
+		DatagramParser instance;
+
+		@Inject
+		protected Builder(final Provider<DatagramParser> dgProvider) {
+			this.instance = dgProvider.get();
+		}
 
 		public Builder withMeterIdentifier(final String meterID) {
 			this.instance.meterIdentifier = meterID;

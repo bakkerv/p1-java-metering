@@ -1,1 +1,3 @@
-smartMeterPortSettings: V4
+timeZone: Europe/Amsterdam
+smartMeter:
+  smartMeterPortSettings: V4
