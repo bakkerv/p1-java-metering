@@ -1,4 +1,4 @@
-package nl.bakkerv.p1.parser;
+package nl.bakkerv.p1.parser.text;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -16,7 +16,7 @@ public class SmartMeterDeviceTest implements P1DatagramListener {
 	@Test
 	public void testReadingFromPort() {
 		SmartMeterDevice smd = new SmartMeterDevice();
-		String dataGram = TestObjectFactory.getTestDatagram();
+		String dataGram = TestObjectFactory.getTestV3Datagram();
 		smd.buffer = ByteBuffer.allocate(smd.maxBufferSize);
 		smd.readerState = ReaderState.Waiting;
 		smd.setSmartMeterListener(this);

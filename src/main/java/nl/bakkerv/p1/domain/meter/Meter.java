@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.base.MoreObjects;
+
 import nl.bakkerv.p1.domain.measurement.Measurement;
 import nl.bakkerv.p1.parser.text.TimestampedValue;
 import nl.bakkerv.p1.parser.text.ValueParser;
@@ -84,6 +86,19 @@ public class Meter<T> {
 		return this.identifier;
 	}
 
+	@Override
+	public String toString() {
+		return MoreObjects.toStringHelper(this)
+				.add("identifier", this.identifier)
+				.add("kind", this.kind)
+				.add("meterType", this.meterType)
+				.add("channel", this.channel)
+				.add("tariff", this.tariff)
+				.add("unit", this.unit)
+				.add("direction", this.direction)
+				.toString();
+	}
+
 	public Optional<Measurement<T>> extractMeasurement(final Instant timestampDatagram, final String value) {
 		Optional<TimestampedValue<T>> parsedValue = this.parser.parse(value);
 		if (!parsedValue.isPresent()) {
@@ -94,7 +109,7 @@ public class Meter<T> {
 	}
 
 	public static class Builder<T> {
-		private Meter<T> instance;
+		private Meter<T> instance = new Meter<>();
 
 		public Builder<T> withChannel(final String channel) {
 			this.instance.channel = channel;

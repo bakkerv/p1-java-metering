@@ -62,6 +62,10 @@ public class DatagramParser {
 		return this.meterIdentifier;
 	}
 
+	public Map<String, Meter<?>> getMapping() {
+		return this.mapping;
+	}
+
 	public static Builder builder() {
 		return new Builder();
 	}

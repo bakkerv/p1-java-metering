@@ -34,7 +34,7 @@ import nl.bakkerv.p1.parser.text.WattValueParser;
 
 public class DatagramParserFactory {
 
-	private static final Pattern VALUE_EXPRESSION = Pattern.compile("\\((.+\\))");
+	private static final Pattern VALUE_EXPRESSION = Pattern.compile("\\((.+)\\)");
 
 	@Inject
 	private DatagramCleaner datagramCleaner;
@@ -52,27 +52,30 @@ public class DatagramParserFactory {
 		}
 		newParser.withVersion("DSMR-" + dsmrVersion.get());
 		newParser.withMeterIdentifier(meterID.get());
+		newParser.withVendorInformation(this.datagramCleaner.asArray(dataGram)[0].substring(1));
 		if (cleanedUp.containsKey(DatagramCodes.ELECTRICITY_CURRENT_POWER_CONSUMPTION)) {
-			addCurrentPowerMeter(newParser, Direction.TO_CLIENT);
+			addCurrentPowerMeter(DatagramCodes.ELECTRICITY_CURRENT_POWER_CONSUMPTION, newParser, Direction.TO_CLIENT, meterID.orElse(null));
 		}
 		if (cleanedUp.containsKey(DatagramCodes.ELECTRICITY_CURRENT_POWER_PRODUCTION)) {
-			addCurrentPowerMeter(newParser, Direction.FROM_CLIENT);
+			addCurrentPowerMeter(DatagramCodes.ELECTRICITY_CURRENT_POWER_PRODUCTION, newParser, Direction.FROM_CLIENT, meterID.orElse(null));
 		}
 		if (cleanedUp.containsKey(DatagramCodes.ELECTRICITY_CONSUMPTION_RATE_1)) {
-			generatekWhMeter(newParser, Direction.TO_CLIENT, 1);
+			generatekWhMeter(DatagramCodes.ELECTRICITY_CONSUMPTION_RATE_1, newParser, Direction.TO_CLIENT, 1, meterID.orElse(null));
 		}
 		if (cleanedUp.containsKey(DatagramCodes.ELECTRICITY_CONSUMPTION_RATE_2)) {
-			generatekWhMeter(newParser, Direction.TO_CLIENT, 2);
+			generatekWhMeter(DatagramCodes.ELECTRICITY_CONSUMPTION_RATE_2, newParser, Direction.TO_CLIENT, 2, meterID.orElse(null));
 		}
 		if (cleanedUp.containsKey(DatagramCodes.ELECTRICITY_PRODUCTION_RATE_1)) {
-			generatekWhMeter(newParser, Direction.FROM_CLIENT, 1);
+			generatekWhMeter(DatagramCodes.ELECTRICITY_PRODUCTION_RATE_1, newParser, Direction.FROM_CLIENT, 1, meterID.orElse(null));
 		}
 		if (cleanedUp.containsKey(DatagramCodes.ELECTRICITY_PRODUCTION_RATE_2)) {
-			generatekWhMeter(newParser, Direction.FROM_CLIENT, 2);
+			generatekWhMeter(DatagramCodes.ELECTRICITY_PRODUCTION_RATE_2, newParser, Direction.FROM_CLIENT, 2, meterID.orElse(null));
 		}
 		ImmutableListMultimap<String, Entry<String, String>> perBusID = Multimaps.index(cleanedUp.entrySet(), s -> s.getKey().split(":")[0]);
 		ImmutableSet<String> keysToIgnore = ImmutableSet.of("1-3", "0-0", "1-0");
-		perBusID.asMap().entrySet().stream().filter(s -> !keysToIgnore.contains(s.getKey())).forEach(s -> extractMeter(newParser, s.getValue()));
+		perBusID.asMap().entrySet().stream().filter(s -> !keysToIgnore.contains(s.getKey()))
+				.peek(s -> logger.info("Extracting for {}", s))
+				.forEach(s -> extractMeter(newParser, s.getValue()));
 
 		return Optional.of(newParser.build());
 	}
@@ -86,13 +89,13 @@ public class DatagramParserFactory {
 		for (Entry<String, String> e : values) {
 			String code = e.getKey().split(":")[1];
 			if ("24.1.0".equals(code)) {
-				Matcher matcher = VALUE_EXPRESSION.matcher(e.getKey());
+				Matcher matcher = VALUE_EXPRESSION.matcher(e.getValue());
 				if (!matcher.matches()) {
 					logger.warn("{} does not match expected pattern", e.getKey());
 					// no meter type known, abort
 					return;
 				}
-				int type = Integer.parseInt(matcher.group(0));
+				int type = Integer.parseInt(matcher.group(1));
 				if (type != 3) {
 					logger.warn("Unknown meter type {}", type);
 					return;
@@ -100,12 +103,13 @@ public class DatagramParserFactory {
 				kind = Kind.GAS;
 			}
 			if ("96.1.0".equals(code)) {
-				Matcher matcher = VALUE_EXPRESSION.matcher(e.getKey());
+				Matcher matcher = VALUE_EXPRESSION.matcher(e.getValue());
 				if (!matcher.matches()) {
 					logger.warn("{} does not match expected pattern", e.getKey());
 					// no meter type known, abort
 					return;
 				}
+				identifier = matcher.group(1);
 			}
 			if ("24.2.1".equals(code)) {
 				obisCode = e.getKey();
@@ -117,31 +121,36 @@ public class DatagramParserFactory {
 					.withKind(kind)
 					.withIdentifier(identifier)
 					.withMeterType(MeterType.INTEGRAL)
+					.withUnit(Unit.CUBIC_METER)
+					.withDirection(Direction.TO_CLIENT)
 					.withParser(parser)
 					.build());
 		}
 	}
 
-	private void generatekWhMeter(final Builder newParser, final Direction direction, final int tariff) {
-		newParser.addPropertyParser(DatagramCodes.ELECTRICITY_CONSUMPTION_RATE_1,
+	private void generatekWhMeter(final String id, final Builder newParser, final Direction direction, final int tariff,
+			final String identifier) {
+		newParser.addPropertyParser(id,
 				Meter.<BigDecimal> builder()
 						.withUnit(Unit.KILOWATTHOUR)
 						.withKind(Kind.ELECTRICITY)
 						.withMeterType(MeterType.INTEGRAL)
 						.withDirection(direction)
 						.withParser(new KwhValueParser())
+						.withIdentifier(identifier)
 						.withTariff(tariff)
 						.build());
 	}
 
-	private void addCurrentPowerMeter(final Builder newParser, final Direction d) {
-		newParser.addPropertyParser(DatagramCodes.ELECTRICITY_CURRENT_POWER_CONSUMPTION,
+	private void addCurrentPowerMeter(final String id, final Builder newParser, final Direction d, final String meterID) {
+		newParser.addPropertyParser(id,
 				Meter.<Integer> builder()
 						.withChannel("Total")
 						.withParser(new WattValueParser())
 						.withUnit(Unit.WATT)
 						.withKind(Kind.ELECTRICITY)
 						.withMeterType(MeterType.INSTANTANEOUS)
+						.withIdentifier(meterID)
 						.withDirection(d)
 						.build());
 	}

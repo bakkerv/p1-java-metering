@@ -54,6 +54,9 @@ public class DatagramCleaner {
 
 	public Optional<DatagramLine> splitLine(final String line) {
 		Matcher matcher = P1_DATAGRAM_PATTERN.matcher(line);
+		if (!matcher.matches()) {
+			return Optional.empty();
+		}
 		String obis = matcher.group(OBIS_ID);
 		if (obis == null) {
 			return Optional.empty();
