@@ -31,6 +31,7 @@ public class SmartMeterDevice implements SerialPortEventListener {
 	private static final int START_CHARACTER = '/';
 	private static final int FINISH_CHARACTER = '!';
 
+	@Inject
 	private P1DatagramListener smartMeterListener;
 
 	protected int maxBufferSize = 4096;
@@ -132,10 +133,6 @@ public class SmartMeterDevice implements SerialPortEventListener {
 				break;
 			}
 		}
-	}
-
-	public void setSmartMeterListener(final P1DatagramListener smartMeterListener) {
-		this.smartMeterListener = smartMeterListener;
 	}
 
 	int crc16_update(int crc, final byte a) {

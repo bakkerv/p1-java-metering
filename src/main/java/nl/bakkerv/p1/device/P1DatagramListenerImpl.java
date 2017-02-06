@@ -1,37 +1,47 @@
 package nl.bakkerv.p1.device;
 
-import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.Inject;
+
 import nl.bakkerv.p1.domain.measurement.Measurement;
 import nl.bakkerv.p1.parser.DatagramParser;
+import nl.bakkerv.p1.parser.DatagramParserFactory;
 
 public class P1DatagramListenerImpl implements P1DatagramListener {
 
-	private Logger logger = LoggerFactory.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(P1DatagramListenerImpl.class);
 
-	private DatagramParser datagramParser;
+	private DatagramParser datagramParser = null;
 
-	private Set<SmartMeterMeasurementListener> listeners = new HashSet<>();
+	@Inject
+	private Set<SmartMeterMeasurementListener> listeners;
+	@Inject
+	private DatagramParserFactory parserFactory;
 
 	private Set<Measurement<?>> currentMeasurement;
-
-	public P1DatagramListenerImpl() {
-		this.datagramParser = new DatagramParser();
-	}
-
-	public void addListener(final SmartMeterMeasurementListener listener) {
-		this.listeners.add(listener);
-	}
 
 	@Override
 	public void put(final String datagram) {
 
-		if (this.logger.isTraceEnabled()) {
-			this.logger.trace(datagram);
+		if (logger.isTraceEnabled()) {
+			logger.trace(datagram);
+		}
+
+		if (this.datagramParser == null) {
+			logger.info("No parser configured yet, create datagram parser based on seen datagram");
+			Optional<DatagramParser> datagramParserOpt = this.parserFactory.create(datagram);
+			if (datagramParserOpt.isPresent()) {
+				this.datagramParser = datagramParserOpt.get();
+				logger.info("Created {}", this.datagramParser);
+			} else {
+				logger.warn("Could not create parser for datagram, ignoring datagram");
+				return;
+			}
 		}
 
 		Set<Measurement<?>> measurement = this.datagramParser.parse(datagram);
