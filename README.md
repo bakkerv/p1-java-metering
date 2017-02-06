@@ -3,7 +3,7 @@ p1-java-metering
 
 ![Build status](https://travis-ci.org/bakkerv/p1-java-metering.svg?branch=development)
 
-This is a forked client library from  kdekooter/p1-java-metering written in Java enabling a connection to (dutch) smart meters.
+This is a forked client library from  kdekooter/p1-java-metering written in Java enabling a connection to (Dutch) smart meters.
 
 The P1 meter delivers datagrams like these every 10 seconds:
 
@@ -37,5 +37,5 @@ Feel free to fork and improve the code!
 Usage
 =====
 This project heavily depends on Guice. 
-1. Create an injector using the `SmartMeterParserModule' and register your own `SmartMeterMeasurementListener' via `SmartMeterMeasurementListenerModule.create' to get called whenever new measurements have been read and parsed.
-2. Instantiate a SmartMeterDevice instance and call its init method to start reading out the Smart Meter
+1. Create an injector using the `SmartMeterParserModule` and register your own `SmartMeterMeasurementListener` via `SmartMeterMeasurementListenerModule.create` to get called whenever new measurements have been read and parsed.
+2. Instantiate a `SmartMeterDevice` instance and call its `init` method to start reading out the Smart Meter
