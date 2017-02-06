@@ -77,17 +77,6 @@
             <version>${slf4j-version}</version>
         </dependency>
         <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils-core</artifactId>
-            <version>1.8.3</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>gnu.io</groupId>
             <artifactId>rxtxcomm</artifactId>
             <version>2.2pre2</version>
@@ -136,6 +125,11 @@
         	<artifactId>assertj-core-java8</artifactId>
         	<version>1.0.0m1</version>
         	<scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>org.slf4j</groupId>
+        	<artifactId>slf4j-simple</artifactId>
+        	<version>${slf4j-version}</version>
         </dependency>
     </dependencies>
 
