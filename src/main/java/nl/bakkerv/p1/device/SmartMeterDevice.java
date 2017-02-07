@@ -46,7 +46,7 @@ public class SmartMeterDevice implements SerialPortEventListener {
 		this.buffer = ByteBuffer.allocate(this.maxBufferSize);
 		try {
 			CommPortIdentifier commPortIdentifier = CommPortIdentifier.getPortIdentifier(this.smartMeterConfig.getPortName());
-			this.serialPort = (SerialPort) commPortIdentifier.open("p1meter", this.smartMeterConfig.getPortTimeOut());
+			this.serialPort = commPortIdentifier.open("p1meter", this.smartMeterConfig.getPortTimeOut());
 			this.serialPort.addEventListener(this);
 			this.serialPort.notifyOnDataAvailable(true);
 			this.serialPort.setSerialPortParams(this.smartMeterConfig.getSmartMeterPortSettings().getBaudRate(),
@@ -86,6 +86,8 @@ public class SmartMeterDevice implements SerialPortEventListener {
 	}
 
 	protected void handleCharacter(final byte c) {
+		System.out.print(Character.toString((char) c));
+
 		switch (this.readerState) {
 		case Disabled:
 			break;
@@ -111,18 +113,29 @@ public class SmartMeterDevice implements SerialPortEventListener {
 			// we are reading the checksum (optionally, not present in V3)
 			this.checksum.put(c);
 			if (this.checksum.position() == 4 || c == '\r' || c == '\n') {
-				logger.debug("Read {} chars, verify checksum", this.checksum.position());
+				logger.debug("Read {} checksum chars, verify checksum", this.checksum.position());
 				boolean checksumCorrect = false;
 				if (this.checksum.position() == 4) {
 					// done reading checksum
-					int receivedCrc16 = Integer.parseInt(new String(this.checksum.array()), 16);
-					if (this.crc == receivedCrc16) {
-						logger.debug("Checkum is correct");
-						checksumCorrect = true;
+					try {
+						String checksumText = new String(this.checksum.array(), 0, this.checksum.position());
+						logger.debug("Checksum text, {}", checksumText);
+						int receivedCrc16 = Integer.parseInt(checksumText, 16);
+						logger.debug("Done reading checksum: {} vs {}", receivedCrc16, this.crc);
+						byte[] data = new byte[this.buffer.position()];
+						for (int i = 0; i < data.length; i++) {
+							data[i] = this.buffer.get(i);
+						}
+						if (this.crc == receivedCrc16) {
+							logger.debug("Checkum is correct");
+							checksumCorrect = true;
+						}
+					} catch (Exception e) {
+						logger.error("Could not verify checksum {}", e.getMessage(), e);
 					}
 				}
 				if (checksumCorrect || this.checksum.position() < 4 && (c == '\r' || c == '\n')) {
-					String datagram = new String(this.buffer.array());
+					String datagram = new String(this.buffer.array(), 0, this.buffer.position());
 					logger.debug("read datagram: {}", datagram);
 					this.smartMeterListener.put(datagram);
 				}
@@ -136,15 +149,15 @@ public class SmartMeterDevice implements SerialPortEventListener {
 	}
 
 	int crc16_update(int crc, final byte a) {
-		int i;
 		crc ^= a;
-		for (i = 0; i < 8; ++i) {
+		for (int i = 0; i < 8; ++i) {
 			if ((crc & 1) != 0) {
-				crc = crc >> 1 ^ 0xA001;
+				crc = crc >> 1 & 0xFFFF ^ 0xA001;
 			} else {
 				crc = crc >> 1;
 			}
 		}
 		return crc;
 	}
+
 }

@@ -51,6 +51,7 @@ public class P1DatagramListenerImpl implements P1DatagramListener {
 		Set<Measurement<?>> measurement = this.datagramParser.parse(datagram);
 
 		this.currentMeasurement = measurement;
+		logger.debug("Listeners {}", this.listeners);
 		this.listeners.forEach(l -> l.smartMeterMeasurementRead(measurement));
 	}
 

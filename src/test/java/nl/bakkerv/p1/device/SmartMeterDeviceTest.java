@@ -27,7 +27,7 @@ public class SmartMeterDeviceTest implements P1DatagramListener {
 	}
 
 	@Test
-	public void testReadingFromPort() {
+	public void testReadingFromPortV3() {
 		Injector j = Guice.createInjector(new SmartMeterDeviceTestModule());
 		SmartMeterDevice smd = j.getInstance(SmartMeterDevice.class);
 		String dataGram = TestObjectFactory.getTestV3Datagram();
@@ -36,6 +36,32 @@ public class SmartMeterDeviceTest implements P1DatagramListener {
 		dataGram.chars().forEachOrdered(e -> smd.handleCharacter((byte) e));
 		String trimmed = this.readDatagram.trim();
 		assertThat(trimmed).isEqualTo(dataGram.trim());
+	}
+
+	@Test
+	public void testReadingFromPortV4() {
+		Injector j = Guice.createInjector(new SmartMeterDeviceTestModule());
+		SmartMeterDevice smd = j.getInstance(SmartMeterDevice.class);
+		String dataGram = TestObjectFactory.getTestV4Datagram();
+		smd.buffer = ByteBuffer.allocate(smd.maxBufferSize);
+		smd.readerState = ReaderState.Waiting;
+		dataGram.chars().forEachOrdered(e -> smd.handleCharacter((byte) e));
+		String trimmed = this.readDatagram.trim();
+		String expectedTrimmed = dataGram.trim();
+		assertThat(trimmed).isEqualTo(expectedTrimmed.substring(0, expectedTrimmed.length() - 4));
+	}
+
+	@Test
+	public void testReadingFromPortV5() {
+		Injector j = Guice.createInjector(new SmartMeterDeviceTestModule());
+		SmartMeterDevice smd = j.getInstance(SmartMeterDevice.class);
+		String dataGram = TestObjectFactory.getTestV5Datagram();
+		smd.buffer = ByteBuffer.allocate(smd.maxBufferSize);
+		smd.readerState = ReaderState.Waiting;
+		dataGram.chars().forEachOrdered(e -> smd.handleCharacter((byte) e));
+		String trimmed = this.readDatagram.trim();
+		String expectedTrimmed = dataGram.trim();
+		assertThat(trimmed).isEqualTo(expectedTrimmed.substring(0, expectedTrimmed.length() - 4));
 	}
 
 	@Override
