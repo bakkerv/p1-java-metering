@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,6 +43,9 @@ public class DatagramParserFactory {
 
 	@Inject
 	private Provider<DatagramParser.Builder> dgBuilderProvider;
+
+	@Inject
+	private TimeZone timeZone;
 
 	private static final Logger logger = LoggerFactory.getLogger(DatagramParserFactory.class);
 
@@ -88,7 +92,7 @@ public class DatagramParserFactory {
 	private void extractMeter(final Builder newParser, final Collection<Entry<String, String>> values) {
 		Kind kind = null;
 		String identifier = null;
-		ValueParser parser = new V4TimestampAndCubicMeterParser();
+		ValueParser parser = null;
 		String obisCode = null;
 		for (Entry<String, String> e : values) {
 			String code = e.getKey().split(":")[1];
@@ -117,7 +121,7 @@ public class DatagramParserFactory {
 			}
 			if ("24.2.1".equals(code)) {
 				obisCode = e.getKey();
-				parser = new V4TimestampAndCubicMeterParser();
+				parser = new V4TimestampAndCubicMeterParser(this.timeZone);
 			}
 		}
 		if (parser != null && kind != null && identifier != null) {

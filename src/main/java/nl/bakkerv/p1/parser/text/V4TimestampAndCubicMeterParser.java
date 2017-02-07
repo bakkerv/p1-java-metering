@@ -8,6 +8,12 @@ import java.util.regex.Pattern;
 
 public class V4TimestampAndCubicMeterParser implements ValueParser<BigDecimal> {
 
+	TimeZone tz;
+
+	public V4TimestampAndCubicMeterParser(final TimeZone tz) {
+		this.tz = tz;
+	}
+
 	// (170128210000W)(03088.130*m3)
 	Pattern pattern = Pattern.compile("\\((?<timestamp>[0-9WS]+)\\)\\((?<meterValue>[0-9]*\\.[0-9]*)\\*m3\\)");
 
@@ -21,8 +27,7 @@ public class V4TimestampAndCubicMeterParser implements ValueParser<BigDecimal> {
 				if (ts == null || meter == null) {
 					return Optional.empty();
 				}
-				TimeZone tz = TimeZone.getDefault();
-				P1Timestamp p1Timestamp = new P1Timestamp(ts, tz);
+				P1Timestamp p1Timestamp = new P1Timestamp(ts, this.tz);
 				BigDecimal bd = new BigDecimal(meter);
 				return Optional.of(new TimestampedValue<>(Optional.of(p1Timestamp.getZonedDateTime().toInstant()), bd));
 			}

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.TimeZone;
 
 import org.junit.Test;
 
@@ -12,7 +13,8 @@ public class V4TimestampAndCubicMeterParserTest {
 
 	@Test
 	public void test() {
-		Optional<TimestampedValue<BigDecimal>> actual = new V4TimestampAndCubicMeterParser().parse("(101209112500W)(12785.123*m3)");
+		V4TimestampAndCubicMeterParser parser = new V4TimestampAndCubicMeterParser(TimeZone.getTimeZone("Europe/Amsterdam"));
+		Optional<TimestampedValue<BigDecimal>> actual = parser.parse("(101209112500W)(12785.123*m3)");
 		assertThat(actual).isPresent();
 		Optional<Instant> actualTimestamp = actual.get().getTimestamp();
 		assertThat(actualTimestamp).isPresent();

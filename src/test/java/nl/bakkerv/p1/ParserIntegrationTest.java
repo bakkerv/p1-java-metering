@@ -99,8 +99,7 @@ public class ParserIntegrationTest {
 
 	}
 
-	private void hasCorrectValues(Set<Measurement<?>> parsedValues) {
-		assertThat(parsedValues).hasSize(7);
+	private void hasCorrectValues(final Set<Measurement<?>> parsedValues) {
 
 		// Check gas
 		Optional<Measurement<?>> anyGasValue = parsedValues.stream().filter(f -> f.getMeter().equals(GAS_METER)).findAny();
