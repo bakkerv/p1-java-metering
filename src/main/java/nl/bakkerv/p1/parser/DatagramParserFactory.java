@@ -152,7 +152,7 @@ public class DatagramParserFactory {
 
 	private void addCurrentPowerMeter(final String id, final Builder newParser, final Direction d, final String meterID) {
 		newParser.addPropertyParser(id,
-				Meter.<Integer> builder()
+				Meter.<BigDecimal> builder()
 						.withChannel("Total")
 						.withParser(new WattValueParser())
 						.withUnit(Unit.WATT)

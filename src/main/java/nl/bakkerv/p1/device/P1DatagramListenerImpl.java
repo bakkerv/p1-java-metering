@@ -1,6 +1,5 @@
 package nl.bakkerv.p1.device;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 
 import nl.bakkerv.p1.domain.measurement.Measurement;
-import nl.bakkerv.p1.domain.meter.Meter;
 import nl.bakkerv.p1.parser.DatagramParser;
 import nl.bakkerv.p1.parser.DatagramParserFactory;
 
@@ -40,8 +38,7 @@ public class P1DatagramListenerImpl implements P1DatagramListener {
 			if (datagramParserOpt.isPresent()) {
 				this.datagramParser = datagramParserOpt.get();
 				logger.info("Created {}", this.datagramParser);
-				Collection<Meter<?>> meters = this.datagramParser.getMapping().values();
-				this.listeners.forEach(s -> s.metersDiscovered(meters));
+				this.listeners.forEach(s -> s.metersDiscovered(this.datagramParser));
 			} else {
 				logger.warn("Could not create parser for datagram, ignoring datagram");
 				return;

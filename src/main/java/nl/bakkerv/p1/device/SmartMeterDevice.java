@@ -86,8 +86,6 @@ public class SmartMeterDevice implements SerialPortEventListener {
 	}
 
 	protected void handleCharacter(final byte c) {
-		System.out.print(Character.toString((char) c));
-
 		switch (this.readerState) {
 		case Disabled:
 			break;

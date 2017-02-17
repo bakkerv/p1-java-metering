@@ -140,14 +140,14 @@ public class ParserIntegrationTest {
 		Optional<Measurement<?>> w_to = parsedValues.stream().filter(f -> f.getMeter().equals(W_TO_CLIENT)).findAny();
 		assertThat(w_to).isPresent();
 		Measurement<?> the_w_to = w_to.get();
-		assertThat(the_w_to.getValue()).isEqualTo(1193);
+		assertThat(the_w_to.getValue()).isEqualTo(BigDecimal.valueOf(1193));
 		assertThat(the_w_to.getTimestamp()).isEqualTo(Instant.ofEpochSecond(1291890620));
 
 		// w ->
 		Optional<Measurement<?>> w_from = parsedValues.stream().filter(f -> f.getMeter().equals(W_FROM_CLIENT)).findAny();
 		assertThat(w_from).isPresent();
 		Measurement<?> the_w_from = w_from.get();
-		assertThat(the_w_from.getValue()).isEqualTo(0);
+		assertThat(the_w_from.getValue()).isEqualTo(BigDecimal.valueOf(0));
 		assertThat(the_w_from.getTimestamp()).isEqualTo(Instant.ofEpochSecond(1291890620));
 	}
 

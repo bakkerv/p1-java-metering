@@ -2,6 +2,7 @@ package nl.bakkerv.p1.parser.text;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -13,8 +14,8 @@ public class WattValueParserTest {
 	@Test
 	public void testParse() throws Exception {
 		WattValueParser parser = new WattValueParser();
-		Optional<TimestampedValue<Integer>> actual = parser.parse("(0000.55*kW)");
-		assertThat(actual.get().getValue()).isEqualTo(550);
+		Optional<TimestampedValue<BigDecimal>> actual = parser.parse("(0000.55*kW)");
+		assertThat(actual.get().getValue().intValue()).isEqualTo(550);
 		assertThat(actual.get().getTimestamp()).isEmpty();
 	}
 }

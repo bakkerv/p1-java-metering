@@ -2,6 +2,7 @@ package nl.bakkerv.p1.domain.measurement;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.function.BiFunction;
 
 import com.google.common.base.MoreObjects;
 
@@ -29,6 +30,10 @@ public class Measurement<T> {
 
 	public T getValue() {
 		return this.value;
+	}
+
+	public Measurement<T> combineMeasurements(final Measurement<T> other, final BiFunction<T, T, T> valueCombiner) {
+		return new Measurement<>(this.timestamp, this.meter, valueCombiner.apply(this.value, other.value));
 	}
 
 	@Override
