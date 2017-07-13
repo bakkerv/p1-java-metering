@@ -16,12 +16,13 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Sets;
 import com.google.inject.Provider;
 
+import nl.bakkerv.p1.device.SmartMeterDescription;
 import nl.bakkerv.p1.domain.measurement.Measurement;
 import nl.bakkerv.p1.domain.meter.Meter;
 import nl.bakkerv.p1.parser.text.InvalidP1TimestampException;
 import nl.bakkerv.p1.parser.text.P1Timestamp;
 
-public class DatagramParser {
+public class DatagramParser implements SmartMeterDescription {
 
 	private Map<String, Meter<?>> mapping;
 	private static final Logger logger = LoggerFactory.getLogger(DatagramParser.class);
@@ -76,18 +77,22 @@ public class DatagramParser {
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 
+	@Override
 	public String getVersion() {
 		return this.version;
 	}
 
+	@Override
 	public String getVendorInformation() {
 		return this.vendorInformation;
 	}
 
+	@Override
 	public String getMeterIdentifier() {
 		return this.meterIdentifier;
 	}
 
+	@Override
 	public Map<String, Meter<?>> getMapping() {
 		return this.mapping;
 	}

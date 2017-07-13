@@ -1,16 +1,18 @@
 package nl.bakkerv.p1.device;
 
-import java.util.Optional;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-
 import nl.bakkerv.p1.domain.measurement.Measurement;
 import nl.bakkerv.p1.parser.DatagramParser;
 import nl.bakkerv.p1.parser.DatagramParserFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class P1DatagramListenerImpl implements P1DatagramListener {
 
@@ -24,6 +26,8 @@ public class P1DatagramListenerImpl implements P1DatagramListener {
 	private DatagramParserFactory parserFactory;
 
 	private Set<Measurement<?>> currentMeasurement;
+
+	private Map<SmartMeterMeasurementListener, ExecutorService> listenerWorkerPool = Maps.newIdentityHashMap();
 
 	@Override
 	public void put(final String datagram) {
@@ -49,7 +53,24 @@ public class P1DatagramListenerImpl implements P1DatagramListener {
 
 		this.currentMeasurement = measurement;
 		logger.debug("Listeners {}", this.listeners);
-		this.listeners.forEach(l -> l.smartMeterMeasurementRead(measurement));
+		for (SmartMeterMeasurementListener sml : this.listeners) {
+			try {
+				final ExecutorService executorService = listenerWorkerPool.computeIfAbsent(sml, key -> Executors.newFixedThreadPool(1));
+				executorService.submit(() -> sml.smartMeterMeasurementRead(measurement));
+			} catch (Throwable t) {
+				logger.error("Could not notify listener {}: {}", sml, t.getMessage());
+			}
+		}
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		for (ExecutorService executorService : this.listenerWorkerPool.values()) {
+			executorService.shutdown();
+		}
+
+
 	}
 
 	public Set<Measurement<?>> getCurrentMeasurements() {

@@ -1,12 +1,11 @@
 package nl.bakkerv.p1.domain.measurement;
 
+import com.google.common.base.MoreObjects;
+import nl.bakkerv.p1.domain.meter.Meter;
+
 import java.time.Instant;
 import java.util.Objects;
 import java.util.function.BiFunction;
-
-import com.google.common.base.MoreObjects;
-
-import nl.bakkerv.p1.domain.meter.Meter;
 
 public class Measurement<T> {
 
@@ -58,8 +57,15 @@ public class Measurement<T> {
 			return false;
 		}
 		Measurement<?> that = (Measurement<?>) other;
-		return Objects.equals(this.timestamp, that.timestamp) &&
-				Objects.equals(this.meter, that.meter) &&
+		if (this.value.getClass() != that.value.getClass()) {
+			return false;
+		}
+		final boolean timestampAndMeterEqual = Objects.equals(this.timestamp, that.timestamp) &&
+				Objects.equals(this.meter, that.meter);
+		if (timestampAndMeterEqual && this.value instanceof Comparable) {
+			return ((Comparable) this.value).compareTo(that.value) == 0;
+		}
+		return timestampAndMeterEqual &&
 				Objects.equals(this.value, that.value);
 
 	}
