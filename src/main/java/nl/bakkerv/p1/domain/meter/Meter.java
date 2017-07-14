@@ -1,6 +1,5 @@
 package nl.bakkerv.p1.domain.meter;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,18 +21,13 @@ public class Meter<T> {
 	private int tariff;
 	private String identifier;
 
-	// Optional sensor/meter properties
-	private Optional<Duration> measurementInterval = Optional.empty();
-	private Optional<Integer> activePowerResolution = Optional.empty();
-
 	private Meter() {
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hash(this.channel, this.direction, this.unit, this.kind,
-				this.meterType, this.tariff, this.identifier, this.measurementInterval,
-				this.activePowerResolution);
+				this.meterType, this.tariff, this.identifier);
 	}
 
 	@Override
@@ -54,9 +48,7 @@ public class Meter<T> {
 				Objects.equals(this.kind, other.kind) &&
 				Objects.equals(this.tariff, other.tariff) &&
 				Objects.equals(this.identifier, other.identifier) &&
-				Objects.equals(this.meterType, other.meterType) &&
-				Objects.equals(this.activePowerResolution, other.activePowerResolution) &&
-				Objects.equals(this.measurementInterval, other.measurementInterval);
+				Objects.equals(this.meterType, other.meterType);
 	}
 
 	public static <T> Builder<T> builder() {
@@ -95,14 +87,6 @@ public class Meter<T> {
 		return this.identifier;
 	}
 
-	public Optional<Integer> getActivePowerResolution() {
-		return this.activePowerResolution;
-	}
-
-	public Optional<Duration> getMeasurementInterval() {
-		return this.measurementInterval;
-	}
-
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
@@ -113,8 +97,6 @@ public class Meter<T> {
 				.add("tariff", this.tariff)
 				.add("unit", this.unit)
 				.add("direction", this.direction)
-				.add("measurementInterval", this.measurementInterval)
-				.add("activePowerResolution", this.activePowerResolution)
 				.toString();
 	}
 
@@ -173,16 +155,6 @@ public class Meter<T> {
 
 		public Builder<T> withIdentifier(final String id) {
 			this.instance.identifier = id;
-			return this;
-		}
-
-		public Builder<T> withMeasurementInterval(final Duration interval) {
-			this.instance.measurementInterval = Optional.ofNullable(interval);
-			return this;
-		}
-
-		public Builder<T> withActivePowerResolution(final Integer resolution) {
-			this.instance.activePowerResolution = Optional.ofNullable(resolution);
 			return this;
 		}
 
