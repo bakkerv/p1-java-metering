@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.inject.Provider;
 
+import nl.bakkerv.p1.configuration.SmartMeterParserConfiguration;
 import nl.bakkerv.p1.domain.meter.Direction;
 import nl.bakkerv.p1.domain.meter.Kind;
 import nl.bakkerv.p1.domain.meter.Meter;
@@ -47,6 +48,9 @@ public class DatagramParserFactory {
 	@Inject
 	private TimeZone timeZone;
 
+	@Inject
+	SmartMeterParserConfiguration smartMeterParserConfiguration;
+
 	private static final Logger logger = LoggerFactory.getLogger(DatagramParserFactory.class);
 
 	public Optional<DatagramParser> create(final String dataGram) {
@@ -54,8 +58,16 @@ public class DatagramParserFactory {
 		Map<String, String> cleanedUp = this.datagramCleaner.splitDiagram(dataGram);
 		Optional<String> dsmrVersion = extractField(cleanedUp, DatagramCodes.DSMR_VERSION, DSMRVersionParser::new);
 		Optional<String> meterID = extractField(cleanedUp, DatagramCodes.SMART_METER_ID, MeterIdentifierParser::new);
-		if (!dsmrVersion.isPresent() || !meterID.isPresent()) {
-			logger.error("No DSMR version and/or meter identifier present");
+		if (!meterID.isPresent()) {
+			logger.error("No meter identifier present.");
+			return Optional.empty();
+		}
+		if (this.smartMeterParserConfiguration.getDsmrVersionOverride().isPresent()) {
+			logger.info("Smart Meter version override present, using {}", this.smartMeterParserConfiguration.getDsmrVersionOverride().get());
+			dsmrVersion = this.smartMeterParserConfiguration.getDsmrVersionOverride();
+		}
+		if (!dsmrVersion.isPresent()) {
+			logger.error("No DSMR version present");
 			return Optional.empty();
 		}
 		newParser.withVersion("DSMR-" + dsmrVersion.get());

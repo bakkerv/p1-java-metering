@@ -1,0 +1,4 @@
+timeZone: Europe/Amsterdam
+dsmrVersionOverride: "30"
+smartMeter:
+  smartMeterPortSettings: V3

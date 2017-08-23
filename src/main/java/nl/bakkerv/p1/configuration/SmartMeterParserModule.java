@@ -5,6 +5,7 @@ import java.util.TimeZone;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
@@ -20,6 +21,7 @@ public class SmartMeterParserModule extends AbstractModule {
 	public static SmartMeterParserModule create(final String configFile) {
 		try {
 			ObjectMapper om = new ObjectMapper(new YAMLFactory());
+			om.registerModule(new Jdk8Module());
 			SmartMeterParserConfiguration config = om.readValue(new File(configFile), SmartMeterParserConfiguration.class);
 			return new SmartMeterParserModule(config);
 		} catch (Exception e) {

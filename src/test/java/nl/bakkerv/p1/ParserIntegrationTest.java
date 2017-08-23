@@ -83,7 +83,7 @@ public class ParserIntegrationTest {
 			.build();
 
 	@Test
-	public void test() {
+	public void testV5() {
 		Injector j = Guice.createInjector(SmartMeterParserModule.create("src/test/resources/config.yaml"));
 		DatagramParserFactory factory = j.getInstance(DatagramParserFactory.class);
 		String testV5Datagram = TestObjectFactory.getTestV5Datagram();
@@ -96,7 +96,18 @@ public class ParserIntegrationTest {
 		hasCorrectMeters(meters);
 		Set<Measurement<?>> parsedValues = parser.get().parse(testV5Datagram);
 		hasCorrectValues(parsedValues);
+	}
 
+	@Test
+	public void testV3_fallbackOfVersion() {
+		Injector j = Guice.createInjector(SmartMeterParserModule.create("src/test/resources/config-3.yaml"));
+		DatagramParserFactory factory = j.getInstance(DatagramParserFactory.class);
+		String testV3Datagram = TestObjectFactory.getTestV3Datagram();
+		Optional<DatagramParser> parser = factory.create(testV3Datagram);
+		assertThat(parser).isPresent();
+		assertThat(parser.get().getMeterIdentifier()).isEqualTo("31333631363433322020202020202020");
+		assertThat(parser.get().getVersion()).isEqualTo("DSMR-30");
+		assertThat(parser.get().getVendorInformation()).isEqualTo("XMX5XMXABCE000062529");
 	}
 
 	private void hasCorrectValues(final Set<Measurement<?>> parsedValues) {
