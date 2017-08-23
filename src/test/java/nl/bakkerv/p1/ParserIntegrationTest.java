@@ -108,6 +108,10 @@ public class ParserIntegrationTest {
 		assertThat(parser.get().getMeterIdentifier()).isEqualTo("31333631363433322020202020202020");
 		assertThat(parser.get().getVersion()).isEqualTo("DSMR-30");
 		assertThat(parser.get().getVendorInformation()).isEqualTo("XMX5XMXABCE000062529");
+		Set<Measurement<?>> parsedValues = parser.get().parse(testV3Datagram);
+		final Instant timestamp = parsedValues.stream().filter(m -> m.getMeter().getMeterType() == MeterType.INSTANTANEOUS).findAny().get().getTimestamp();
+		// test for truncated timestamps
+		assertThat(timestamp.getNano()).isEqualTo(0);
 	}
 
 	private void hasCorrectValues(final Set<Measurement<?>> parsedValues) {

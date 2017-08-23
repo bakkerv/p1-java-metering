@@ -1,6 +1,7 @@
 package nl.bakkerv.p1.parser;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +49,7 @@ public class DatagramParser implements SmartMeterDescription {
 		}
 		Map<String, String> datagramLines = cleanupAndSplitDatagram(datagram);
 		// Instant timestamp = datagramLines.containsKey(DatagramCodes.TIMESTAMP) ? this.extract : Instant.now(); // FIXME: extract timestamp
-		Instant timestamp = Instant.now();
+		Instant timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 		if (datagramLines.containsKey(DatagramCodes.TIMESTAMP)) {
 			String p1Value = datagramLines.get(DatagramCodes.TIMESTAMP);
 			String p1String = p1Value.substring(1, p1Value.length() - 1);
