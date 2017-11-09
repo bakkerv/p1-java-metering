@@ -1,14 +1,18 @@
 package nl.bakkerv.p1.testutil;
 
-import org.apache.commons.io.IOUtils;
-
 import java.io.IOException;
 import java.io.StringWriter;
+
+import org.apache.commons.io.IOUtils;
 
 public class TestObjectFactory {
 
 	public static String getTestV3Datagram() {
 		return getResource("/test-data-v3.txt");
+	}
+
+	public static String getTestAMDatagram() {
+		return getResource("/test-data-am.txt");
 	}
 
 	public static String getTestV4Datagram() {

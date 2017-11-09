@@ -114,6 +114,20 @@ public class ParserIntegrationTest {
 		assertThat(timestamp.getNano()).isEqualTo(0);
 	}
 
+	@Test
+	public void testV3_AM() {
+		Injector j = Guice.createInjector(SmartMeterParserModule.create("src/test/resources/config-3.yaml"));
+		DatagramParserFactory factory = j.getInstance(DatagramParserFactory.class);
+		String testV3Datagram = TestObjectFactory.getTestAMDatagram();
+		Optional<DatagramParser> parser = factory.create(testV3Datagram);
+		assertThat(parser).isPresent();
+		Set<Measurement<?>> parsedValues = parser.get().parse(testV3Datagram);
+		final Optional<Measurement<?>> gasValue = parsedValues.stream().filter(m -> m.getMeter().getEnergy() == Kind.GAS).findAny();
+		assertThat(gasValue).isPresent();
+		assertThat(gasValue.get().getTimestamp()).isEqualTo(Instant.ofEpochSecond(1510131600l));
+		assertThat(gasValue.get().getValue()).isEqualTo(new BigDecimal("03197.328"));
+	}
+
 	private void hasCorrectValues(final Set<Measurement<?>> parsedValues) {
 
 		// Check gas

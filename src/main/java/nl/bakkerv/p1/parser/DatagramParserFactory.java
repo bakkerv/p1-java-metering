@@ -31,6 +31,7 @@ import nl.bakkerv.p1.parser.text.DSMRVersionParser;
 import nl.bakkerv.p1.parser.text.KwhValueParser;
 import nl.bakkerv.p1.parser.text.MeterIdentifierParser;
 import nl.bakkerv.p1.parser.text.TimestampedValue;
+import nl.bakkerv.p1.parser.text.V2TimestampAndCubicMeterParser;
 import nl.bakkerv.p1.parser.text.V4TimestampAndCubicMeterParser;
 import nl.bakkerv.p1.parser.text.ValueParser;
 import nl.bakkerv.p1.parser.text.WattValueParser;
@@ -134,6 +135,10 @@ public class DatagramParserFactory {
 			if ("24.2.1".equals(code)) {
 				obisCode = e.getKey();
 				parser = new V4TimestampAndCubicMeterParser(this.timeZone);
+			}
+			if ("24.3.0".equals(code)) {
+				obisCode = e.getKey();
+				parser = new V2TimestampAndCubicMeterParser(this.timeZone);
 			}
 		}
 		if (parser != null && kind != null && identifier != null) {
